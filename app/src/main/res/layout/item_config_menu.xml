@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/txtNombre"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:text="Nombre"
+        android:textSize="16sp"/>
+
+    <TextView
+        android:id="@+id/txtPrecio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="S/ 0.00"
+        android:layout_marginEnd="12dp"/>
+
+    <ImageButton
+        android:id="@+id/btnEliminar"
+        android:src="@android:drawable/ic_delete"
+        android:background="@android:color/transparent"
+        android:layout_width="40dp"
+        android:layout_height="40dp"/>
+
+</LinearLayout>
