@@ -2,12 +2,6 @@
 
 A comprehensive restaurant order management application that streamlines daily operations. MeseroLS enables staff to seamlessly dispatch, modify, and print orders, as well as automate billing. Through these core transactions, the system aggregates operational data to empower data-driven business decisions.
 
-<p align="center">
-  <img src="docs/screenshots/mesas.png" width="738" alt="Table selection screen">
-  <img src="docs/screenshots/pedido.png" width="738" alt="Order screen">
-  <img src="docs/screenshots/cuenta.png" width="738" alt="Bill screen">
-</p>
-
 ## Why it exists
 
 MeseroLS runs in production at Las Sirenas, a restaurant in Lima, Peru. Waiters use it on a tablet to take orders table by table, send them to the kitchen, change them mid-service, and close the bill.
