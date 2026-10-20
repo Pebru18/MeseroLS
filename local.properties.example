@@ -1,0 +1,12 @@
+# copy this file to local.properties and fill in your own values
+# local.properties is gitignored, so none of this ever gets committed
+
+# sdk.dir gets added automatically by android studio, no need to set it here
+
+# ip and port of the thermal printer on the restaurant's local network
+printer.ip=192.168.1.100
+printer.port=9100
+
+# 4-digit backup pin for the order history screen, used when firestore
+# is unreachable or when the pin isn't registered in the "passwords" collection
+master.pin=0000

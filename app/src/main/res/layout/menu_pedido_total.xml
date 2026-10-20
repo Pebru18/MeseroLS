@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!--
+        "LLEVAR" button in the top-right of the toolbar.
+        Visibility is controlled at runtime via onPrepareOptionsMenu:
+          - LLEVAR  : shown in activo / enviado (non-editando) states
+          - SALIR LLEVAR: shown while in LLEVAR mode
+          - Hidden  : in cuenta state and while editando is active
+    -->
+    <item
+        android:id="@+id/menu_llevar"
+        android:title="LLEVAR"
+        android:orderInCategory="1"
+        app:showAsAction="always"/>
+
+</menu>

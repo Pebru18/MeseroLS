@@ -1,0 +1,93 @@
+[
+  {
+    "id": "incapersonal",
+    "nombre": "Inca Kola Personal",
+    "tipo": "bebidas",
+    "precio": 250,
+    "configurable": false
+  },
+  {
+    "id": "cocapersonal",
+    "nombre": "Coca Cola Personal",
+    "tipo": "bebidas",
+    "precio": 250,
+    "configurable": false
+  },
+  {
+    "id": "aguapersonal",
+    "nombre": "Agua Mineral Personal",
+    "tipo": "bebidas",
+    "precio": 250,
+    "configurable": false
+  },
+  {
+    "id": "cervezatrigo",
+    "nombre": "Cerveza Cuzqueña Trigo",
+    "tipo": "bebidas",
+    "precio": 900,
+    "configurable": false
+  },
+  {
+    "id": "cervezanegra",
+    "nombre": "Cerveza Cuzqueña Negra",
+    "tipo": "bebidas",
+    "precio": 1000,
+    "configurable": false
+  },
+  {
+    "id": "cervezapilsen",
+    "nombre": "Cerveza Pilsen",
+    "tipo": "bebidas",
+    "precio": 800,
+    "configurable": false
+  },
+  {
+    "id": "incagordita",
+    "nombre": "Inca Kola Gordita",
+    "tipo": "bebidas",
+    "precio": 400,
+    "configurable": false
+  },
+  {
+    "id": "inca1l",
+    "nombre": "Inca Kola 1L",
+    "tipo": "bebidas",
+    "precio": 700,
+    "configurable": false
+  },
+  {
+    "id": "coca1l",
+    "nombre": "Coca Cola 1L",
+    "tipo": "bebidas",
+    "precio": 700,
+    "configurable": false
+  },
+  {
+    "id": "inca1.5l",
+    "nombre": "Inca Kola 1.5L",
+    "tipo": "bebidas",
+    "precio": 900,
+    "configurable": false
+  },
+  {
+    "id": "coca1.5l",
+    "nombre": "Coca Cola 1.5L",
+    "tipo": "bebidas",
+    "precio": 900,
+    "configurable": false
+  },
+  {
+    "id": "inca2.5l",
+    "nombre": "Inca Kola 2.5L",
+    "tipo": "bebidas",
+    "precio": 1200,
+    "configurable": false
+  },
+  {
+    "id": "coca2.5l",
+    "nombre": "Coca Cola 2.5L",
+    "tipo": "bebidas",
+    "precio": 1200,
+    "configurable": false
+  }
+]

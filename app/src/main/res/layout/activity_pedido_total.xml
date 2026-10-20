@@ -1,0 +1,86 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootLayout"
+    android:background="@color/colorBackground"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:background="@color/colorPrimary"
+        app:titleTextColor="@android:color/white"
+        android:elevation="4dp"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        app:title="Pedido Total"/>
+
+    <ListView
+        android:id="@+id/listaPedido"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="8dp"
+        android:padding="4dp"
+        android:layout_weight="1"/>
+
+    <Button
+        android:id="@+id/btnEnviarPedido"
+        android:text="ENVIAR PEDIDO"
+        android:background="@drawable/bg_boton"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="12dp"
+        android:padding="12dp"
+        android:textStyle="bold"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <Button
+        android:id="@+id/btnImprimirCuenta"
+        android:text="IMPRIMIR CUENTA"
+        android:background="@drawable/bg_boton"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="12dp"
+        android:padding="12dp"
+        android:textStyle="bold"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <Button
+        android:id="@+id/btnSeguirPidiendo"
+        android:text="SEGUIR PIDIENDO"
+        android:background="@drawable/bg_boton"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="12dp"
+        android:padding="12dp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <Button
+        android:id="@+id/btnVerCuenta"
+        android:text="VER CUENTA"
+        android:background="@drawable/bg_boton"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="12dp"
+        android:padding="12dp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <Button
+        android:id="@+id/btnCancelarEdicion"
+        android:text="CANCELAR CAMBIOS"
+        android:background="@drawable/bg_boton"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="12dp"
+        android:padding="12dp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+</LinearLayout>
