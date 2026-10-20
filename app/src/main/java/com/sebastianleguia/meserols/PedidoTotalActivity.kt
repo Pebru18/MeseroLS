@@ -13,6 +13,7 @@ import androidx.core.view.WindowInsetsCompat
 import android.content.Intent
 import androidx.appcompat.app.AlertDialog
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldValue
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -63,6 +64,7 @@ class PedidoTotalActivity : AppCompatActivity() {
             .get()
             .addOnSuccessListener { doc ->
                 estadoActual = doc.getString("estado") ?: "activo"
+                btnEnviarPedido.isEnabled = true
                 val editando = doc.getBoolean("editando") ?: false
                 btnEnviarPedido.visibility = Button.GONE
                 btnImprimirCuenta.visibility = Button.GONE
@@ -135,7 +137,7 @@ class PedidoTotalActivity : AppCompatActivity() {
         }
 
         btnEnviarPedido.setOnClickListener {
-
+            btnEnviarPedido.isEnabled = false
             // first send: estado activo, no temp collection involved yet
             if (!usandoTemporal) {
                 db.collection("detalle_pedido")
@@ -144,6 +146,7 @@ class PedidoTotalActivity : AppCompatActivity() {
                     .get()
                     .addOnSuccessListener { result ->
                         if (result.isEmpty) {
+                            btnEnviarPedido.isEnabled = true
                             Toast.makeText(this, "No hay cambios", Toast.LENGTH_SHORT).show()
                             return@addOnSuccessListener
                         }
@@ -715,6 +718,29 @@ class PedidoTotalActivity : AppCompatActivity() {
             return
         }
 
+        db.collection("pedidos")
+            .document(pedidoId!!)
+            .get()
+            .addOnSuccessListener { pedidoDoc ->
+
+                if (pedidoDoc.getBoolean("editando") == true) {
+                    usandoTemporal = true
+                    callback?.invoke()
+                } else {
+                    clonarATemporal(callback)
+                }
+            }
+    }
+    private fun clonarATemporal(callback: (() -> Unit)? = null) {
+        if (usandoTemporal) {
+            callback?.invoke()
+            return
+        }
+
+        if (creandoTemporal) {
+            return
+        }
+
         creandoTemporal = true
 
         db.collection("detalle_pedido")
@@ -1004,7 +1030,7 @@ class PedidoTotalActivity : AppCompatActivity() {
 
                 db.collection("detalle_pedido")
                     .document(item.id)
-                    .update("cantidad", item.cantidad)
+                    .update("cantidad", FieldValue.increment(1))
             }
 
             btnMenos.setOnClickListener {
@@ -1117,25 +1143,38 @@ class PedidoTotalActivity : AppCompatActivity() {
                 }
                 // otherwise it's the plain activo state, no temp collection involved yet
                 if (item.cantidad > 1) {
-
                     item.cantidad--
-
                     txtCantidad.text = item.cantidad.toString()
-
-                    db.collection("detalle_pedido")
-                        .document(item.id)
-                        .update("cantidad", item.cantidad)
-
                 } else {
-
-                    db.collection("detalle_pedido")
-                        .document(item.id)
-                        .delete()
-
                     items.removeAt(position)
-
                     notifyDataSetChanged()
                 }
+
+                db.collection("detalle_pedido")
+                    .whereEqualTo("pedido_id", pedidoId)
+                    .whereEqualTo("producto_id", item.productoId)
+                    .get()
+                    .addOnSuccessListener { result ->
+
+                        val docsDelPlato = result.filter { doc ->
+
+                            val nombreDoc     = doc.getString("nombre") ?: ""
+                            val comentarioDoc = doc.getString("comentario") ?: ""
+                            val opcionesDoc   = doc.get("opciones") as? Map<String, String> ?: emptyMap()
+
+                            nombreDoc     == item.nombre &&
+                                    comentarioDoc == item.comentario &&
+                                    opcionesDoc   == item.opciones
+                        }
+
+                        val conMasDeUno = docsDelPlato.firstOrNull { (it.getLong("cantidad") ?: 0) > 1 }
+
+                        if (conMasDeUno != null) {
+                            conMasDeUno.reference.update("cantidad", FieldValue.increment(-1))
+                        } else {
+                            docsDelPlato.firstOrNull()?.reference?.delete()
+                        }
+                    }
             }
 
             view.setOnClickListener {

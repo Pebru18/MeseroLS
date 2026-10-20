@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
 
     private val db = FirebaseFirestore.getInstance()
     private val botonesMesas = mutableMapOf<Int, View>()
-
+    private val mesasProcesando = mutableSetOf<Int>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -69,22 +69,32 @@ class MainActivity : AppCompatActivity() {
             view.layoutParams = params
 
             view.setOnClickListener {
+                if (!mesasProcesando.add(i)) return@setOnClickListener
                 db.collection("pedidos")
                     .whereArrayContains("mesas", i)
                     .get()
                     .addOnSuccessListener { result ->
                         var pedidoActivo: String? = null
+                        var mejorPrioridad = 0
                         var ultimoTimestamp = 0L
 
                         for (doc in result) {
                             val estado = doc.getString("estado")
                             val timestamp = doc.getLong("timestamp") ?: 0L
 
-                            if (estado in listOf("activo", "enviado", "cuenta")) {
-                                if (timestamp > ultimoTimestamp) {
-                                    ultimoTimestamp = timestamp
-                                    pedidoActivo = doc.id
-                                }
+                            // a sent order wins over an empty "activo" leftover for the same table
+                            val prioridad = when (estado) {
+                                "enviado", "cuenta" -> 2
+                                "activo"            -> 1
+                                else                -> 0
+                            }
+                            if (prioridad == 0) continue
+
+                            if (prioridad > mejorPrioridad ||
+                                (prioridad == mejorPrioridad && timestamp > ultimoTimestamp)) {
+                                mejorPrioridad = prioridad
+                                ultimoTimestamp = timestamp
+                                pedidoActivo = doc.id
                             }
                         }
 
@@ -109,8 +119,10 @@ class MainActivity : AppCompatActivity() {
                                     intent.putExtra("numero_mesa", i)
                                     startActivity(intent)
                                 }
+                                .addOnFailureListener { mesasProcesando.remove(i) }
                         }
                     }
+                    .addOnFailureListener { mesasProcesando.remove(i) }
             }
 
             grid.addView(view)
@@ -144,7 +156,7 @@ class MainActivity : AppCompatActivity() {
                                 ultimoTimestamp = timestampEnvio
                                 ultimoEstado = estado
                             }
-                        } else {
+                        } else if (ultimoEstado == "pagado") {
                             ultimoEstado = estado
                         }
                     }
@@ -187,6 +199,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        mesasProcesando.clear()
         actualizarColoresMesas()
         handler.postDelayed(runnableActualizacion, intervaloActualizacion)
     }

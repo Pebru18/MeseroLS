@@ -10,7 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.firebase.firestore.FirebaseFirestore
-
+import com.google.firebase.firestore.FieldValue
 class PedidoActivity : AppCompatActivity() {
 
     data class Producto(
@@ -31,6 +31,8 @@ class PedidoActivity : AppCompatActivity() {
     // to finish instead of navigating away mid-sync
     private var operacionesPendientes = 0
     private var navegacionPendiente = false
+    private var creandoTemporal = false
+    private val callbacksEnEspera = mutableListOf<() -> Unit>()
     private lateinit var btnPedidoTotal: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -243,6 +245,12 @@ class PedidoActivity : AppCompatActivity() {
     }
 
     private fun iniciarEdicionTemporal(callback: () -> Unit) {
+        if (creandoTemporal) {
+            callbacksEnEspera.add(callback)
+            return
+        }
+
+        creandoTemporal = true
         registrarOperacion() // blocks navigation while the temp collection gets cloned
 
         db.collection("pedidos")
@@ -251,7 +259,7 @@ class PedidoActivity : AppCompatActivity() {
             .addOnSuccessListener { pedidoDoc ->
                 val editando = pedidoDoc.getBoolean("editando") ?: false
                 if (editando) {
-                    callback()
+                    terminarClonado(callback)
                     finalizarOperacion()
                     return@addOnSuccessListener
                 }
@@ -274,16 +282,36 @@ class PedidoActivity : AppCompatActivity() {
                                 "enviado" to (doc.getBoolean("enviado") ?: true),
                                 "anulado" to (doc.getBoolean("anulado") ?: false)
                             )
-                            val ref = db.collection("detalle_pedido_temp").document()
+                            // same id as the original, so a repeated clone overwrites instead of duplicating
+                            val ref = db.collection("detalle_pedido_temp").document(doc.id)
                             batch.set(ref, nuevoDoc)
                         }
 
                         batch.commit().addOnSuccessListener {
                             db.collection("pedidos").document(pedidoId!!).update("editando", true)
-                            callback()
+                            terminarClonado(callback)
+                        }.addOnFailureListener {
+                            creandoTemporal = false
+                            callbacksEnEspera.clear()
                         }.addOnCompleteListener { finalizarOperacion() }
-                    }.addOnFailureListener { finalizarOperacion() }
-            }.addOnFailureListener { finalizarOperacion() }
+                    }.addOnFailureListener {
+                        creandoTemporal = false
+                        callbacksEnEspera.clear()
+                        finalizarOperacion()
+                    }
+            }.addOnFailureListener {
+                creandoTemporal = false
+                callbacksEnEspera.clear()
+                finalizarOperacion()
+            }
+    }
+
+    private fun terminarClonado(callback: () -> Unit) {
+        creandoTemporal = false
+        callback()
+        val enEspera = callbacksEnEspera.toList()
+        callbacksEnEspera.clear()
+        enEspera.forEach { it() }
     }
 
     private fun mostrarCarta() {
@@ -343,8 +371,7 @@ class PedidoActivity : AppCompatActivity() {
                     query.get().addOnSuccessListener { documents ->
                         if (!documents.isEmpty) {
                             val doc = documents.documents[0]
-                            val cantidadActual = doc.getLong("cantidad") ?: 0
-                            db.collection(coleccion).document(doc.id).update("cantidad", cantidadActual + 1)
+                            db.collection(coleccion).document(doc.id).update("cantidad", FieldValue.increment(1))
                                 .addOnCompleteListener { finalizarOperacion() }
                         } else {
                             val item = hashMapOf(
