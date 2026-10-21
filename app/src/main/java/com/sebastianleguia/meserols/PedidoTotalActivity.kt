@@ -1404,19 +1404,29 @@ class PedidoTotalActivity : AppCompatActivity() {
 
                     append(nombreBase)
 
-                    append("\n- Ceviche ")
-                    append(opciones["Picante"] ?: "")
-
-                    if (opciones.containsKey("Tipo de Chicharrón")) {
-
-                        append("\n- Chicharrón de ")
-                        append(opciones["Tipo de Chicharrón"])
-                    }
-
-                    if (opciones.containsKey("Acompañamiento")) {
+                    if (nombreBase.contains("28")) {
 
                         append("\n- ")
-                        append(opciones["Acompañamiento"])
+                        append(opciones["Elección 1"] ?: "")
+                        append("\n- ")
+                        append(opciones["Elección 2"] ?: "")
+
+                    } else {
+
+                        append("\n- Ceviche ")
+                        append(opciones["Picante"] ?: "")
+
+                        if (opciones.containsKey("Tipo de Chicharrón")) {
+
+                            append("\n- Chicharrón de ")
+                            append(opciones["Tipo de Chicharrón"])
+                        }
+
+                        if (opciones.containsKey("Acompañamiento")) {
+
+                            append("\n- ")
+                            append(opciones["Acompañamiento"])
+                        }
                     }
                 }
 
