@@ -31,6 +31,7 @@ class MainActivity : AppCompatActivity() {
 
     private val db = FirebaseFirestore.getInstance()
     private val botonesMesas = mutableMapOf<Int, View>()
+    private val animacionesMesas = mutableMapOf<Int, ObjectAnimator>()
     private val mesasProcesando = mutableSetOf<Int>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,7 +54,7 @@ class MainActivity : AppCompatActivity() {
 
         for (i in 1..totalMesas) {
             val view = layoutInflater.inflate(R.layout.item_mesa, grid, false)
-
+            view.background.mutate()
             val txtMesa = view.findViewById<TextView>(R.id.txtMesa)
             val txtTiempo = view.findViewById<TextView>(R.id.txtTiempo)
 
@@ -166,7 +167,7 @@ class MainActivity : AppCompatActivity() {
                     } else {
                         0
                     }
-
+                    animacionesMesas.remove(numeroMesa)?.cancel()
                     view.alpha = 1f
 
                     txtMesa.text = "Mesa $numeroMesa"
@@ -187,6 +188,7 @@ class MainActivity : AppCompatActivity() {
                             anim.repeatMode = ObjectAnimator.REVERSE
                             anim.repeatCount = ObjectAnimator.INFINITE
                             anim.start()
+                            animacionesMesas[numeroMesa] = anim
                         }
 
                         else -> {
