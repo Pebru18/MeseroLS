@@ -46,7 +46,8 @@ class PedidoTotalActivity : AppCompatActivity() {
         "Bebidas"         to 5,
         "Otros"           to 6
     )
-
+    // total width of the "-----ACT 1-----" line on the printed ticket
+    private val ANCHO_SEPARADOR = 40
     private fun verificarCambiosPendientes() {
         db.collection("detalle_pedido")
             .whereEqualTo("pedido_id", pedidoId)
@@ -438,7 +439,7 @@ class PedidoTotalActivity : AppCompatActivity() {
         val sb = StringBuilder()
         for (item in ordenados) {
             val lineas = item.nombre.split("\n")
-            sb.append("· ${item.qty} ${lineas[0]}\n")
+            sb.append("· ${cantidadAncha(item.qty)} ${lineas[0]}\n")
             for (i in 1 until lineas.size) sb.append("   ${lineas[i]}\n")
             if (item.comentario.isNotBlank()) sb.append("   ** Nota: ${item.comentario}\n")
             sb.append("\n")
@@ -647,7 +648,7 @@ class PedidoTotalActivity : AppCompatActivity() {
             val lineas           = item.nombre.split("\n")
 
             if (netQty > 0) {
-                sb.append("· $netQty ${lineas[0]}\n")
+                sb.append("· ${cantidadAncha(netQty)} ${lineas[0]}\n")
                 for (i in 1 until lineas.size) sb.append("   ${lineas[i]}\n")
                 if (item.comentario.isNotBlank()) sb.append("   ** Nota: ${item.comentario}\n")
                 // struck-through line right after, before the blank line
@@ -667,8 +668,7 @@ class PedidoTotalActivity : AppCompatActivity() {
         for (entry in todosLosDeltas) {
             val sourceId = "update_${entry.numero}"
 
-            sb.append("----------------------------------------\n\n")
-            sb.append("ACTUALIZACION ${entry.numero} - ${entry.hora}\n\n")
+            sb.append(separadorActualizacion(entry.numero))
 
             // sorted by ORDEN_GRUPOS then alphabetical, additions and removals mixed
             // together since that's how they're meant to read on the ticket
@@ -699,7 +699,7 @@ class PedidoTotalActivity : AppCompatActivity() {
                     // is 0 the whole addition got cancelled, so skip it and just show the
                     // struck-through marker instead of both "+1 pollo" and "xxxxx 1 pollo xxxxx"
                     if (remaining > 0) {
-                        sb.append("+ $remaining ${lineas[0]}\n")
+                        sb.append("+ ${cantidadAncha(remaining)} ${lineas[0]}\n")
                         for (i in 1 until lineas.size) sb.append("   ${lineas[i]}\n")
                         if (item.comentario.isNotBlank()) sb.append("   ** Nota: ${item.comentario}\n")
                     }
@@ -721,9 +721,21 @@ class PedidoTotalActivity : AppCompatActivity() {
     // marks a cancelled item for the printed ticket, "xxxxx n name xxxxx" - wrapped in
     // x's on both sides so it stands out from the "+" addition lines and the "----" separators
     private fun formatStrikethrough(qty: Int, nombre: String): String {
-        return "XXXXX $qty $nombre XXXXX"
+        return "XXXXX ${cantidadAncha(qty)} $nombre XXXXX"
     }
 
+    // wraps a quantity in markers so the printer prints it wider than the dish name
+    private fun cantidadAncha(qty: Int): String {
+        return "${EthernetPrinterManager.MARCA_CANT_ON}$qty${EthernetPrinterManager.MARCA_CANT_OFF}"
+    }
+
+    // thin "-----ACT 1-----" line, printed small and with tight line spacing
+    private fun separadorActualizacion(numero: Int): String {
+        val etiqueta = "ACT $numero"
+        val relleno = (ANCHO_SEPARADOR - etiqueta.length) / 2
+        val linea = "-".repeat(relleno) + etiqueta + "-".repeat(ANCHO_SEPARADOR - etiqueta.length - relleno)
+        return "${EthernetPrinterManager.MARCA_ACT_ON}$linea\n${EthernetPrinterManager.MARCA_ACT_OFF}"
+    }
     fun obtenerColeccionActual(): String {
         if (estadoActual == "activo") return "detalle_pedido"
         return if (usandoTemporal) "detalle_pedido_temp" else "detalle_pedido"

@@ -45,6 +45,20 @@ object EthernetPrinterManager {
     private val FONT_NORMAL = byteArrayOf(0x1D, 0x21, 0x00)
     private val FONT_CUERPO_PEDIDO = byteArrayOf(0x1D, 0x21, BYTE_FUENTE_CUERPO)
 
+    // inline markers the ticket builders put in the body text, the printer code turns them
+    // into size changes and they never reach the paper
+    const val MARCA_CANT_ON = '\u0001'
+    const val MARCA_CANT_OFF = '\u0002'
+    const val MARCA_ACT_ON = '\u0003'
+    const val MARCA_ACT_OFF = '\u0004'
+
+    // quantity: wider, same height as the body (GS ! n -> 0x11 = 2x wide, 2x tall)
+    private val FONT_CANTIDAD = byteArrayOf(0x1D, 0x21, 0x11)
+
+    // update separator: ESC 3 n sets the line spacing, ESC 2 goes back to the default
+    // bump the 24 if the small lines look glued together
+    private val LINE_SPACING_TIGHT = byteArrayOf(0x1B, 0x33, 24)
+    private val LINE_SPACING_DEFAULT = byteArrayOf(0x1B, 0x32)
     private val charsetCp850: Charset = Charset.forName("Cp850")
 
     // plain utf-8 send + paper cut, kept around for simple cases that don't need ESC/POS formatting
@@ -102,7 +116,42 @@ object EthernetPrinterManager {
             }
         }.start()
     }
+    // writes the body, switching the printer size at each marker
+    private fun escribirCuerpo(out: OutputStream, cuerpo: String) {
+        val pendiente = StringBuilder()
 
+        fun volcar() {
+            if (pendiente.isNotEmpty()) {
+                out.write(pendiente.toString().toByteArray(charsetCp850))
+                pendiente.setLength(0)
+            }
+        }
+
+        for (c in cuerpo) {
+            when (c) {
+                MARCA_CANT_ON -> {
+                    volcar()
+                    out.write(FONT_CANTIDAD)
+                }
+                MARCA_CANT_OFF -> {
+                    volcar()
+                    out.write(FONT_CUERPO_PEDIDO)
+                }
+                MARCA_ACT_ON -> {
+                    volcar()
+                    out.write(FONT_NORMAL)
+                    out.write(LINE_SPACING_TIGHT)
+                }
+                MARCA_ACT_OFF -> {
+                    volcar()
+                    out.write(LINE_SPACING_DEFAULT)
+                    out.write(FONT_CUERPO_PEDIDO)
+                }
+                else -> pendiente.append(c)
+            }
+        }
+        volcar()
+    }
     // prints an order comanda or update ticket: giant mesa number, optional "<<" update
     // marker, separator line, then the body at tamanoCuerpo size
     fun imprimirPedido(
@@ -137,7 +186,7 @@ object EthernetPrinterManager {
                 out.write(FONT_CUERPO_PEDIDO)
 
                 val cuerpoFiltrado = cuerpoTexto.replace("•", "·")
-                out.write(cuerpoFiltrado.toByteArray(charsetCp850))
+                escribirCuerpo(out, cuerpoFiltrado)
 
                 out.write(FONT_NORMAL)
 
