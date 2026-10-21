@@ -264,24 +264,46 @@ class PedidoTotalActivity : AppCompatActivity() {
                                     for (doc in originales) {
                                         batch.delete(doc.reference)
                                     }
+                                    // docs of the same dish (positives and negatives) get summed, so
+                                    // detalle_pedido keeps a single net doc per dish after the update
+                                    val docsPorPlato = mutableMapOf<String, MutableList<DocumentSnapshot>>()
 
                                     for (doc in tempDocs) {
+                                        val productoDoc   = doc.getString("producto_id") ?: ""
+                                        val nombreDoc     = doc.getString("nombre") ?: ""
+                                        val comentarioDoc = doc.getString("comentario") ?: ""
+                                        val opcionesDoc   = doc.get("opciones") as? Map<String, String> ?: emptyMap()
+
+                                        val clave = "$productoDoc|$nombreDoc|$comentarioDoc|${opcionesDoc.toSortedMap()}"
+
+                                        docsPorPlato.getOrPut(clave) { mutableListOf() }.add(doc)
+                                    }
+
+                                    for (docsDelPlato in docsPorPlato.values) {
+                                        val neto = docsDelPlato.sumOf { it.getLong("cantidad") ?: 0L }
+
+                                        // a fully cancelled dish doesn't need to stay in the order
+                                        if (neto <= 0L) continue
+
+                                        // negative docs only carry the cancellation, so take the dish data from a positive one
+                                        val base = docsDelPlato.firstOrNull { (it.getLong("cantidad") ?: 0L) > 0L }
+                                            ?: docsDelPlato.first()
+
                                         val nuevo = hashMapOf(
                                             "pedido_id"   to pedidoId,
-                                            "producto_id" to (doc.getString("producto_id") ?: ""),
-                                            "nombre"      to (doc.getString("nombre") ?: ""),
-                                            "grupo"       to (doc.getString("grupo") ?: "Otros"),
-                                            "cantidad"    to (doc.getLong("cantidad") ?: 0),
-                                            "comentario"  to (doc.getString("comentario") ?: ""),
-                                            "opciones"    to (doc.get("opciones") ?: emptyMap<String, String>()),
-                                            "precio"      to (doc.getLong("precio") ?: 0L),
+                                            "producto_id" to (base.getString("producto_id") ?: ""),
+                                            "nombre"      to (base.getString("nombre") ?: ""),
+                                            "grupo"       to (base.getString("grupo") ?: "Otros"),
+                                            "cantidad"    to neto,
+                                            "comentario"  to (base.getString("comentario") ?: ""),
+                                            "opciones"    to (base.get("opciones") ?: emptyMap<String, String>()),
+                                            "precio"      to (base.getLong("precio") ?: 0L),
                                             "enviado"     to true,
-                                            "anulado"     to (doc.getBoolean("anulado") ?: false)
+                                            "anulado"     to false
                                         )
                                         val ref = db.collection("detalle_pedido").document()
                                         batch.set(ref, nuevo)
                                     }
-
                                     for (doc in tempDocs) {
                                         batch.delete(doc.reference)
                                     }
