@@ -46,8 +46,6 @@ class PedidoTotalActivity : AppCompatActivity() {
         "Bebidas"         to 5,
         "Otros"           to 6
     )
-    // total width of the "-----ACT 1-----" line on the printed ticket
-    private val ANCHO_SEPARADOR = 40
     private fun verificarCambiosPendientes() {
         db.collection("detalle_pedido")
             .whereEqualTo("pedido_id", pedidoId)
@@ -668,7 +666,10 @@ class PedidoTotalActivity : AppCompatActivity() {
         for (entry in todosLosDeltas) {
             val sourceId = "update_${entry.numero}"
 
-            sb.append(separadorActualizacion(entry.numero))
+            // drop the blank line the previous item left, so the rule hugs it
+            if (sb.endsWith("\n\n")) sb.setLength(sb.length - 1)
+
+            sb.append(EthernetPrinterManager.lineaActualizacion(entry.numero))
 
             // sorted by ORDEN_GRUPOS then alphabetical, additions and removals mixed
             // together since that's how they're meant to read on the ticket
@@ -729,13 +730,6 @@ class PedidoTotalActivity : AppCompatActivity() {
         return "${EthernetPrinterManager.MARCA_CANT_ON}$qty${EthernetPrinterManager.MARCA_CANT_OFF}"
     }
 
-    // thin "-----ACT 1-----" line, printed small and with tight line spacing
-    private fun separadorActualizacion(numero: Int): String {
-        val etiqueta = "ACT $numero"
-        val relleno = (ANCHO_SEPARADOR - etiqueta.length) / 2
-        val linea = "-".repeat(relleno) + etiqueta + "-".repeat(ANCHO_SEPARADOR - etiqueta.length - relleno)
-        return "${EthernetPrinterManager.MARCA_ACT_ON}$linea\n${EthernetPrinterManager.MARCA_ACT_OFF}"
-    }
     fun obtenerColeccionActual(): String {
         if (estadoActual == "activo") return "detalle_pedido"
         return if (usandoTemporal) "detalle_pedido_temp" else "detalle_pedido"

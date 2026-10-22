@@ -51,14 +51,23 @@ object EthernetPrinterManager {
     const val MARCA_CANT_OFF = '\u0002'
     const val MARCA_ACT_ON = '\u0003'
     const val MARCA_ACT_OFF = '\u0004'
+    const val MARCA_ACT_ETIQUETA = '\u0005'
 
     // quantity: wider, same height as the body (GS ! n -> 0x11 = 2x wide, 2x tall)
     private val FONT_CANTIDAD = byteArrayOf(0x1D, 0x21, 0x11)
 
-    // update separator: ESC 3 n sets the line spacing, ESC 2 goes back to the default
-    // bump the 24 if the small lines look glued together
-    private val LINE_SPACING_TIGHT = byteArrayOf(0x1B, 0x33, 24)
+    // update rule: ESC 3 n sets the line spacing, ESC 2 goes back to the default
+    // lower the 18 to pack the rule tighter (it may overlap its neighbours), raise it if the label gets cut
+    private val LINE_SPACING_TIGHT = byteArrayOf(0x1B, 0x33, 18)
     private val LINE_SPACING_DEFAULT = byteArrayOf(0x1B, 0x32)
+
+    // characters per printed line at normal size (the bill uses the same 48)
+    // if a rule wraps onto a second line lower it, if it stops short of the right edge raise it
+    private const val ANCHO_TICKET = 48
+
+    // "ACT n" label at the end of the update rule: 0x00 normal, 0x10 wider, 0x01 taller, 0x11 both
+    private const val BYTE_FUENTE_ETIQUETA: Byte = 0x10
+    private val FONT_ETIQUETA_ACT = byteArrayOf(0x1D, 0x21, BYTE_FUENTE_ETIQUETA)
     private val charsetCp850: Charset = Charset.forName("Cp850")
 
     // plain utf-8 send + paper cut, kept around for simple cases that don't need ESC/POS formatting
@@ -116,6 +125,14 @@ object EthernetPrinterManager {
             }
         }.start()
     }
+    // full-width "-----------ACT 1" rule: thin dashes with the label wider at the right end
+    fun lineaActualizacion(numero: Int): String {
+        val etiqueta = "ACT $numero"
+        val factorAncho = ((BYTE_FUENTE_ETIQUETA.toInt() shr 4) and 0x0F) + 1
+        val guiones = maxOf(ANCHO_TICKET - etiqueta.length * factorAncho, 0)
+
+        return "$MARCA_ACT_ON${"-".repeat(guiones)}$MARCA_ACT_ETIQUETA$etiqueta\n$MARCA_ACT_OFF"
+    }
     // writes the body, switching the printer size at each marker
     private fun escribirCuerpo(out: OutputStream, cuerpo: String) {
         val pendiente = StringBuilder()
@@ -141,6 +158,10 @@ object EthernetPrinterManager {
                     volcar()
                     out.write(FONT_NORMAL)
                     out.write(LINE_SPACING_TIGHT)
+                }
+                MARCA_ACT_ETIQUETA -> {
+                    volcar()
+                    out.write(FONT_ETIQUETA_ACT)
                 }
                 MARCA_ACT_OFF -> {
                     volcar()
@@ -181,7 +202,7 @@ object EthernetPrinterManager {
                 out.write(FONT_NORMAL)
 
                 out.write(ESC_LEFT)
-                out.write("--------------------------------\n\n".toByteArray(charsetCp850))
+                out.write(("-".repeat(ANCHO_TICKET) + "\n\n").toByteArray(charsetCp850))
 
                 out.write(FONT_CUERPO_PEDIDO)
 
